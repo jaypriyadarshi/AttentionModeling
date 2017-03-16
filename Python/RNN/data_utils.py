@@ -20,7 +20,7 @@ class Trial(object):
 		self.x = data['E']['trials'][0][0][0][idx]['x']
 		self.y = data['E']['trials'][0][0][0][idx]['y']
 		self.trial_num = idx + 1
-		self.movie_num = data['E']['CLIPnum'][0][0][0][idx]
+		self.movie_num = data['E']['CLIPnum'][0][0][0][idx] - 1
 		self.movie_name = data['E']['CLIPname'][0][0][0][self.movie_num - 1] #MATLAB is 1-indexed
 		self.dframe_tIND = data['E']['dframe_tIND'][0][0][0][idx].ravel() # Index in timestamps at which the actual trial started, basically the index after which timestamps are positive
 
@@ -36,8 +36,16 @@ class Trial(object):
 		#change axes to image axes
 		newOrigin = [eye_tracker.pix_wide / 2, eye_tracker.pix_high / 2]
 		#get it to saliency map resolution 
-		self.x = ((self.x + newOrigin[0]) / (vars.Actual_Res['height'] / vars.Saliency_Map_Res['height'])).astype(int) - 1 #MATLAB is 1-indexed
-		self.y += ((self.y + newOrigin[1]) / (vars.Actual_Res['height'] / vars.Saliency_Map_Res['height'])).astype(int) - 1
+		self.x = ((self.x + newOrigin[0]) / (vars.Actual_Res['height'] / vars.Saliency_Map_Res['height']))
+		self.y += ((self.y + newOrigin[1]) / (vars.Actual_Res['height'] / vars.Saliency_Map_Res['height']))
+		#taking care of the points which are outside saliency map dim
+		self.x[self.x >= vars.Saliency_Map_Res['width']] = vars.Saliency_Map_Res['width'] - 1
+		self.x[self.x < 0] = 0
+		self.y[self.y >= vars.Saliency_Map_Res['height']] = vars.Saliency_Map_Res['height'] - 1
+		self.y[self.y < 0] = 0
+		self.x = self.x.astype(int) - 1 #MATLAB is 1-indexed
+		self.y = self.y.astype(int) - 1
+
 
 	#for index = frame_num we get the timestamp in ms
 	def _get_frametime(self, eye_tracker):
@@ -55,16 +63,18 @@ class Saliency_Map(object):
 		self.segment_width = Saliency_Map_Receptive_Field['width']
 		self.base_dir = Saliency_Map_BaseDir
 		self.map_types = Map_Types
-		self.max_saliency_vals = pickle.load(open(max_saliency_SaveFile, 'rb'))
+		self.max_saliency_vals = pickle.load(open(vars.max_saliency_SaveFile, 'rb'))
 
-	def _load_saliency_map(self, movie_name, map_type):
-		file_path = self.base_dir + '/' + movie_name.split('.')[0] + '/feat' + map_type + '.mat'
-		f = h5py.File(file_path)
-		feat_map = np.array((f.get('feats')))
-		return feat_map.T
+	def _load_saliency_maps(self, movie_name):
+		#load and normalize maps
+		def _load_map(movie_name, map_type):
+			file_path = self.base_dir + '/' + movie_name.split('.')[0] + '/feat' + map_type + '.mat'
+			f = h5py.File(file_path)
+			return map(lambda frame: frame.reshape(self.height, self.width), np.array((f.get('feats'))).T / self.max_saliency_vals[map_type]) #normalize
+		return map(lambda map_type: _load_map(movie_name, map_type), self.map_types)	
 
 	#cuts the saliency map grid into different regions based on saliency map receptive field parameter
-	def _segment_saliency_map(self):
+	def _segment_map(self):
 		grid = np.zeros((self.height, self.width))
 		label = 0
 		for r in range(0, self.height, self.segment_height):
@@ -80,6 +90,7 @@ class Saliency_Map(object):
 			for c in range(0, self.width, self.segment_width):
 				avg_vals.append(np.mean(feat_map[r : r + self.segment_height, c : c + self.segment_width]))
 		return np.array(avg_vals)
+		
 
 	#Finds the global max of all map types (one value for each map type - C, F, I, M, O)
 	def _find_max_saliency_vals(self, file_names):

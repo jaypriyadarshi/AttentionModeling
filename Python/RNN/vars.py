@@ -5,9 +5,10 @@ Actual_Res = {'height': 1024, 'width': 1280}
 Saliency_Map_Res = {'height': 64, 'width': 80}
 Saliency_Map_BaseDir = '/Users/jaypriyadarshi/Desktop/Jay/Eye-Movement-Classification/Feature_map'
 Map_Types = ['C', 'F', 'I', 'M', 'O']
-Saliency_Map_Receptive_Field = {'height': 8, 'width': 8}
+Saliency_Map_Receptive_Field = {'height': 16, 'width': 16}
 max_saliency_SaveFile = 'max_saliency_vals.p'
 Groups = [1,5]
+n_bins = 3
 
 #hyperparameters
 hidden_size = 100 # size of hidden layer of neurons

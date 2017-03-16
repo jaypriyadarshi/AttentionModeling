@@ -30,6 +30,7 @@ class Trial(object):
 		#only consider (x,y) in the actual trial and not calibration
 		self.x = self.x[self.dframe_tIND[0] :]
 		self.y = self.y[self.dframe_tIND[0] :]
+
 		#DVA to pixels
 		self.x = (self.x * eye_tracker.PPD) / 1000
 		self.y = (self.y * eye_tracker.PPD) / 1000
@@ -48,11 +49,11 @@ class Trial(object):
 
 
 	#for index = frame_num we get the timestamp in ms
-	def _get_frametime(self, eye_tracker):
+	def _compute_frametime(self, eye_tracker):
 		self.timestamps = np.arange(self.x.shape[0]).reshape(self.x.shape[0],1)
 		self.timestamps *= eye_tracker.SAMP_INT
 		self.timestamps -= self.timestamps[self.dframe_tIND[0]]
-		return self.timestamps[self.dframe_tIND.ravel()]
+		self.frametimes = self.timestamps[self.dframe_tIND].ravel()
 
 #for all operations on saliency maps
 class Saliency_Map(object):
@@ -70,7 +71,8 @@ class Saliency_Map(object):
 		def _load_map(movie_name, map_type):
 			file_path = self.base_dir + '/' + movie_name.split('.')[0] + '/feat' + map_type + '.mat'
 			f = h5py.File(file_path)
-			return map(lambda frame: frame.reshape(self.height, self.width), np.array((f.get('feats'))).T / self.max_saliency_vals[map_type]) #normalize
+			return np.array((f.get('feats'))).T / self.max_saliency_vals[map_type]
+			#return map(lambda frame: frame.reshape(self.height, self.width), np.array((f.get('feats'))).T / self.max_saliency_vals[map_type]) #normalize
 		return map(lambda map_type: _load_map(movie_name, map_type), self.map_types)	
 
 	#cuts the saliency map grid into different regions based on saliency map receptive field parameter

@@ -5,11 +5,11 @@ class Model(object):
     def __init__(self, hidden_size, num_classes, num_regions, seq_length):
         # model parameters
         self.hidden_size = hidden_size
-        self.ip_dim = vars.num_regions + (len(vars.Map_Types) * vars.n_bins) + (vars.num_regions * len(vars.Map_Types)) # num regions + 5 sal maps + avg region vals from 5 maps
+        self.ip_dim = vars.ip_dim
         self.num_classes = num_classes
         self.num_regions = num_regions #number of regions after segmenting the saliency map
         self.seq_length = seq_length
-        self.Wxh = np.random.randn(hidden_size, ip_dim)*0.01 # input to hidden
+        self.Wxh = np.random.randn(hidden_size, self.ip_dim)*0.01 # input to hidden
         self.Whh1 = np.random.randn(hidden_size, hidden_size)*0.01 # hidden to hidden
         self.Whh2 = np.random.randn(hidden_size, hidden_size)*0.01 # hidden to hidden - 2nd RNN layer
         self.Wh1h2 = np.random.randn(hidden_size, hidden_size)*0.01 # hidden to hidden - b/w 1st and 2nd RNN layer

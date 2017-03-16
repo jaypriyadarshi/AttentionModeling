@@ -12,7 +12,7 @@ class Solver(object):
 		self.hprev1 = np.zeros((self.model.hidden_size, 1)) #RNN l-1 memory
 		self.hprev2 = np.zeros((self.model.hidden_size, 1)) #RNN l-2 memory
 		self.curr_iter = 0
-		self.update_rule = getattr(self.optimizer, '_' + self.optimizer.update_rule)
+		self.update_rule = getattr(self.optimizer, '_' + update_rule)
 
 	def _reset(self):
 		self.hprev1 = np.zeros((self.model.hidden_size, 1)) # reset RNN memory
@@ -23,9 +23,9 @@ class Solver(object):
 		if self.start_id + self.model.seq_length + 1 >= len(self.data):
 			self._reset()
 
-		inputs = map(lambda (region_id, saliency_bin_nums): [region_id] + [saliency_bin_nums], zip(self.data['regions'][self.start_id : self.start_id + self.seq_length], self.data['saliency_bin_num'][self.start_id : self.start_id + self.seq_length]))
-		grp_targets = self.data['group_targets'][self.start_id : self.start_id + self.seq_length]
-		loc_targets = self.data['regions'][self.start_id + 1 : self.start_id + self.seq_length + 1]
+		inputs = map(lambda (region_id, saliency_bin_nums): [region_id] + [saliency_bin_nums], zip(self.data['regions'][self.start_id : self.start_id + self.model.seq_length], self.data['saliency_bin_num'][self.start_id : self.start_id + self.model.seq_length]))
+		grp_targets = self.data['group_targets'][self.start_id : self.start_id + self.model.seq_length]
+		loc_targets = self.data['regions'][self.start_id + 1 : self.start_id + self.model.seq_length + 1]
 
 		loss, dWxh, dWhh1, dWhh2, dWh1h2, dWhy1, dWhy2, dbh1, dbh2, dby1, dby2, hprev1, hprev2 = self.model._loss(inputs, grp_targets, loc_targets, self.hprev1, self.hprev2)
 		self.model.smooth_loss = self.model.smooth_loss * 0.999 + loss * 0.001

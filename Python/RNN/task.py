@@ -39,7 +39,7 @@ class Task(object):
 					hist, bin_edges = np.histogram(saliency_maps[trials[trial_idx].movie_num][map_idx][frame_seq[frame_idx]], bins=vars.n_bins)
 					saliency_value = saliency_maps[trials[trial_idx].movie_num][map_idx][frame_seq[frame_idx]].reshape(saliency_obj.height, saliency_obj.width)[trials[trial_idx].y[frame_idx], trials[trial_idx].x[frame_idx]][0]
 					frame_saliency_bins.append(np.where(bin_edges >  saliency_value)[0][0])
-				trial_avg_saliency.append(frame_avg_saliency)
+				trial_avg_saliency.append(np.array(frame_avg_saliency).ravel())
 				trial_saliency_bins.append(frame_saliency_bin)
 			avg_saliency_vals.append(trial_avg_saliency)
 			saliency_bins.append(trial_saliency_bin)
@@ -47,6 +47,19 @@ class Task(object):
 		#saliency bins: [[each trial[each frame]]] - each element represents a trial and each trial has a list for each frame, each frame contains the bin number for each saliency map (list)
 		#avg_saliency_vals: [[each trial[each frame]]] - each element represents a trial and each trial has a list for each frame's average saliency value over regions,
 		#each frame contains another list with each element representing avg of a particular map
+
+		grp_targets = map(lambda trial: trial.group - 1, trials) #0 indexed
+		return input_data = {'group_targets': grp_targets, 'regions': xy_regions, 'avg_saliency_region': avg_saliency_vals, 'saliency_bin_num': saliency_bins} 
+
+	def _train_rnn(self):
+		model = Model(vars.hidden_size, vars.ip_dim, vars.num_classes, vars.num_regions, vars.seq_length)
+		data = _prep_Data()
+		solver = Solver(model, data, vars.num_iter, vars.learning_rate, vars.update_rule)
+		solver._train()
+		solver._save_model()
+
+
+
 
 
 

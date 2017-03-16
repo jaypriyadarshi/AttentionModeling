@@ -1,10 +1,11 @@
 import numpy as np
+import vars
 
 class Model(object):
-    def __init__(self, hidden_size, ip_dim, num_classes, num_regions, seq_length):
+    def __init__(self, hidden_size, num_classes, num_regions, seq_length):
         # model parameters
         self.hidden_size = hidden_size
-        self.ip_dim = ip_dim
+        self.ip_dim = vars.num_regions + (len(vars.Map_Types) * vars.n_bins) + (vars.num_regions * len(vars.Map_Types)) # num regions + 5 sal maps + avg region vals from 5 maps
         self.num_classes = num_classes
         self.num_regions = num_regions #number of regions after segmenting the saliency map
         self.seq_length = seq_length
@@ -25,8 +26,11 @@ class Model(object):
         hs1[-1] = np.copy(hprev1)
         hs2[-1] = np.copy(hprev2) 
         loss = 0
+        inputs = map(lambda (l,s1,s2,s3,s4,s5): 
+            [l, s1 + self.num_regions, s2 + self.num_regions + vars.n_bins, s2 + self.num_regions + (2 * vars.n_bins), s3 + self.num_regions + (3 * vars.n_bins), s4 + self.num_regions + (4 * vars.n_bins), 
+            s5 + self.num_regions + (5 * vars.n_bins)], inputs)
         for t in xrange(len(inputs)):
-            xs[t] = np.zeros((vocab_size,1)) # encode in 1-of-k representation
+            xs[t] = np.zeros((self.num_regions + (len(vars.Map_Types) * vars.n_bins),1)) # encode in 1-of-k representation
             xs[t][inputs[t]] = 1
             hs1[t] = np.tanh(np.dot(self.Wxh, xs[t]) + np.dot(self.Whh1, hs1[t-1]) + self.bh1) # hidden state 1
             ys1[t] = np.dot(self.Why1, hs1[t]) + self.by1 # unnormalized log probabilities for participant group
@@ -35,7 +39,7 @@ class Model(object):
             ys2[t] = np.dot(self.Why2, hs2[t]) + self.by2 # unnormalized log probabilities for next location
             ps2[t] = np.exp(ys2[t]) / np.sum(np.exp(ys2[t])) # probabilities for next location
             loss += -np.log(ps1[t][grp_targets[t],0]) + -np.log(ps2[t][loc_targets[t],0]) #1st and 2nd softmax (cross-entropy loss)
-        return loss, xs, hs1, hs2, ps1, ps2
+        return loss, xs, hs1, hs2, ps1, ps2, inputs
 
 
     def backward_pass(self, inputs, grp_targets, loc_targets, xs, hs1, hs2, ps1, ps2):
@@ -75,7 +79,7 @@ class Model(object):
         returns the loss, gradients on model parameters, and last hidden state
         """
         # forward pass
-        loss, xs, hs1, hs2, ps1, ps2 = self.forward_pass(inputs, grp_targets, loc_targets, hprev1, hprev2)
+        loss, xs, hs1, hs2, ps1, ps2, inputs = self.forward_pass(inputs, grp_targets, loc_targets, hprev1, hprev2)
         # backward pass: compute gradients going backwards
         dWxh, dWhh1, dWhh2, dWh1h2, dWhy1, dWhy2, dbh1, dbh2, dby1, dby2 = self.backward_pass(inputs, grp_targets, loc_targets, xs, hs1, hs2, ps1, ps2)
         for dparam in [dWxh, dWhh1, dWhh2, dWh1h2, dWhy1, dWhy2, dbh1, dbh2, dby1, dby2]:

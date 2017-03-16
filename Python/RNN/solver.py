@@ -10,11 +10,13 @@ class Solver(object):
 		self.curr_iter = 0
 		self.update_rule = getattr(self.optimizer, '_' + self.optimizer.update_rule)
 
+	def _reset(self):
+		self.hprev = np.zeros((self.model.hidden_size, 1)) # reset RNN memory
+		self.start_id = 0
+
 	def _step(self):
 		if self.start_id + self.seq_length + 1 >= len(self.data):
-			self.hprev = np.zeros((self.model.hidden_size, 1)) # reset RNN memory
-			self.start_id = 0
-
+			self._reset()
 		loss, dWxh, dWhh, dWhy, dbh, dby, hprev = self.model._loss(inputs, targets, self.hprev)
 		smooth_loss = smooth_loss * 0.999 + loss * 0.001
 		if self.curr_iter % 100 == 0:

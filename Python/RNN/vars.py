@@ -10,7 +10,7 @@ max_saliency_SaveFile = 'max_saliency_vals.p'
 
 #hyperparameters
 hidden_size = 100 # size of hidden layer of neurons
-seq_length = 15 # number of steps to unroll the RNN for, used average length of poet_names
+seq_length = 15 # number of steps to unroll the RNN for
 learning_rate = 1e-1
 
 #model params

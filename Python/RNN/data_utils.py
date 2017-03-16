@@ -36,8 +36,8 @@ class Trial(object):
 		#change axes to image axes
 		newOrigin = [eye_tracker.pix_wide / 2, eye_tracker.pix_high / 2]
 		#get it to saliency map resolution 
-		self.x = int((self.x + newOrigin[0]) / (Actual_Res['height'] / Saliency_Map_Res['height']))
-		self.y += int((self.y + newOrigin[1]) / (Actual_Res['height'] / Saliency_Map_Res['height']))
+		self.x = int((self.x + newOrigin[0]) / (Actual_Res['height'] / Saliency_Map_Res['height'])) - 1 #MATLAB is 1-indexed
+		self.y += int((self.y + newOrigin[1]) / (Actual_Res['height'] / Saliency_Map_Res['height'])) - 1
 
 	#for index = frame_num we get the timestamp in ms
 	def _get_frametime(self, eye_tracker):

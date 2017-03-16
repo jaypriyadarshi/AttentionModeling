@@ -44,6 +44,10 @@ class Task(object):
 			avg_saliency_vals.append(trial_avg_saliency)
 			saliency_bins.append(trial_saliency_bin)
 
+		#saliency bins: [[each trial[each frame]]] - each element represents a trial and each trial has a list for each frame, each frame contains the bin number for each saliency map (list)
+		#avg_saliency_vals: [[each trial[each frame]]] - each element represents a trial and each trial has a list for each frame's average saliency value over regions,
+		#each frame contains another list with each element representing avg of a particular map
+
 
 
 

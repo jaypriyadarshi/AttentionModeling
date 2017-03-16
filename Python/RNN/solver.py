@@ -1,3 +1,7 @@
+import numpy as np
+import cPickle as pickle
+from optimizer import Optimizer
+
 class Solver(object):
 	def __init__(self, model, data, num_iter, learning_rate, update_rule):
 		self.model = model

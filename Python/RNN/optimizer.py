@@ -1,4 +1,6 @@
-class optimizer(object):
+import numpy as np
+
+class Optimizer(object):
 	def __init__(self, learning_rate, model):
 		self.learning_rate = learning_rate 
 		#memory_vars

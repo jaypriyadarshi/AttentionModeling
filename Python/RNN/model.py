@@ -1,3 +1,5 @@
+import numpy as np
+
 class Model(object):
     def __init__(self, hidden_size, ip_dim, num_classes, num_regions, seq_length):
         # model parameters

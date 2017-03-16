@@ -3,7 +3,7 @@ import numpy as np
 import h5py
 import os
 import cPickle as pickle
-from vars import MAT_FileName, Actual_Res, Saliency_Map_Res, Saliency_Map_BaseDir, Saliency_Map_Receptive_Field, Map_Types, max_saliency_SaveFile
+import vars
 
 class EyeTracker(object):
 	def __init__(self, data):
@@ -36,8 +36,8 @@ class Trial(object):
 		#change axes to image axes
 		newOrigin = [eye_tracker.pix_wide / 2, eye_tracker.pix_high / 2]
 		#get it to saliency map resolution 
-		self.x = int((self.x + newOrigin[0]) / (Actual_Res['height'] / Saliency_Map_Res['height'])) - 1 #MATLAB is 1-indexed
-		self.y += int((self.y + newOrigin[1]) / (Actual_Res['height'] / Saliency_Map_Res['height'])) - 1
+		self.x = ((self.x + newOrigin[0]) / (vars.Actual_Res['height'] / vars.Saliency_Map_Res['height'])).astype(int) - 1 #MATLAB is 1-indexed
+		self.y += ((self.y + newOrigin[1]) / (vars.Actual_Res['height'] / vars.Saliency_Map_Res['height'])).astype(int) - 1
 
 	#for index = frame_num we get the timestamp in ms
 	def _get_frametime(self, eye_tracker):
@@ -95,3 +95,8 @@ class Saliency_Map(object):
 
 def get_dir_entries(base_dir):
 	return [f for f in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, f))]
+
+#gets all the trails for a particular group
+def get_trials(data, group_num):
+	return np.where(data['E']['GRUPnum'][0][0][0] == group_num)[0]
+

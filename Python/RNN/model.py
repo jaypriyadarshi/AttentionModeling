@@ -26,12 +26,11 @@ class Model(object):
         hs1[-1] = np.copy(hprev1)
         hs2[-1] = np.copy(hprev2) 
         loss = 0
-        #print "inputs", inputs[0]
-
         inputs = map(lambda (l,s): 
             [l, s[0] + self.num_regions, s[1] + self.num_regions + vars.n_bins, s[2] + self.num_regions + (2 * vars.n_bins), s[3] + self.num_regions + (3 * vars.n_bins), s[4] + self.num_regions + (4 * vars.n_bins)], inputs)
         for t in xrange(len(inputs)):
             xs[t] = np.zeros((self.num_regions + (len(vars.Map_Types) * vars.n_bins),1)) # encode in 1-of-k representation
+            #print inputs[t]
             xs[t][inputs[t]] = 1
             #print "Wxh size: ", self.Wxh.shape
             #print "input size: ", xs[t].shape
@@ -43,6 +42,9 @@ class Model(object):
             hs2[t] = np.tanh(np.dot(self.Wh1h2, hs1[t]) + np.dot(self.Whh2, hs2[t-1]) + self.bh2) # hidden state 2
             ys2[t] = np.dot(self.Why2, hs2[t]) + self.by2 # unnormalized log probabilities for next location
             ps2[t] = np.exp(ys2[t]) / np.sum(np.exp(ys2[t])) # probabilities for next location
+            #print 't: ', t
+            #print 'grp_targets: ', grp_targets[t]
+            #print 'loc_targets: ', loc_targets[t]
             loss += -np.log(ps1[t][grp_targets[t],0]) + -np.log(ps2[t][loc_targets[t],0]) #1st and 2nd softmax (cross-entropy loss)
         return loss, xs, hs1, hs2, ps1, ps2, inputs
 

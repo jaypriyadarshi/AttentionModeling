@@ -21,13 +21,12 @@ class Solver(object):
 		self.start_id = 0
 
 	def _step(self):
-		if self.start_id + self.model.seq_length + 1 >= len(self.data):
+		if self.start_id + self.model.seq_length + 1 >= len(self.data['train_regions']):
 			self._reset()
-
-		inputs = map(lambda (region_id, saliency_bin_nums): [region_id] + [saliency_bin_nums], zip(self.data['regions'][self.start_id : self.start_id + self.model.seq_length], self.data['saliency_bin_num'][self.start_id : self.start_id + self.model.seq_length]))
-		grp_targets = self.data['group_targets'][self.start_id : self.start_id + self.model.seq_length]
-		loc_targets = self.data['regions'][self.start_id + 1 : self.start_id + self.model.seq_length + 1]
-		avg_saliency_region = self.data['avg_saliency_region'][self.start_id : self.start_id + self.model.seq_length] 
+		inputs = map(lambda (region_id, saliency_bin_nums): [region_id] + [saliency_bin_nums], zip(self.data['train_regions'][self.start_id : self.start_id + self.model.seq_length], self.data['train_saliency_bin_num'][self.start_id : self.start_id + self.model.seq_length]))
+		grp_targets = self.data['train_group_targets'][self.start_id : self.start_id + self.model.seq_length]
+		loc_targets = self.data['train_regions'][self.start_id + 1 : self.start_id + self.model.seq_length + 1]
+		avg_saliency_region = self.data['train_avg_saliency_region'][self.start_id : self.start_id + self.model.seq_length] 
 		loss, dWxh, dWhh1, dWhh2, dWh1h2, dWhy1, dWhy2, dbh1, dbh2, dby1, dby2, hprev1, hprev2 = self.model._loss(inputs, grp_targets, loc_targets, self.hprev1, self.hprev2, avg_saliency_region)
 		self.model.smooth_loss = self.model.smooth_loss * 0.999 + loss * 0.001
 		if self.curr_iter % 100 == 0:

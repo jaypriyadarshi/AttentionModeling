@@ -21,7 +21,7 @@ class Model(object):
         self.by2 = np.zeros((num_regions, 1)) # output2 bias
         self.smooth_loss = -np.log(1.0/self.num_classes)*seq_length + -np.log(1.0/self.num_regions)*seq_length # loss at iteration 0
 
-    def forward_pass(self, inputs, grp_targets, loc_targets, hprev1, hprev2):
+    def forward_pass(self, inputs, grp_targets, loc_targets, hprev1, hprev2, avg_saliency_region):
         xs, hs1, hs2, ys1, ys2, ps1, ps2 = {}, {}, {}, {}, {}, {}, {}
         hs1[-1] = np.copy(hprev1)
         hs2[-1] = np.copy(hprev2) 
@@ -35,6 +35,8 @@ class Model(object):
             xs[t][inputs[t]] = 1
             #print "Wxh size: ", self.Wxh.shape
             #print "input size: ", xs[t].shape
+            #print "avg size: ", avg_saliency_region[t].shape
+            xs[t] = np.vstack((xs[t], avg_saliency_region[t].reshape(avg_saliency_region[t].shape[0], 1)))
             hs1[t] = np.tanh(np.dot(self.Wxh, xs[t]) + np.dot(self.Whh1, hs1[t-1]) + self.bh1) # hidden state 1
             ys1[t] = np.dot(self.Why1, hs1[t]) + self.by1 # unnormalized log probabilities for participant group
             ps1[t] = np.exp(ys1[t]) / np.sum(np.exp(ys1[t])) # probabilities for participant group
@@ -75,14 +77,14 @@ class Model(object):
             dh1next = np.dot(self.Whh1.T, dhraw1) 
         return dWxh, dWhh1, dWhh2, dWh1h2, dWhy1, dWhy2, dbh1, dbh2, dby1, dby2
 
-    def _loss(self, inputs, grp_targets, loc_targets, hprev1, hprev2):
+    def _loss(self, inputs, grp_targets, loc_targets, hprev1, hprev2, avg_saliency_region):
         """
         inputs,targets are both list of integers.
         hprev is Hx1 array of initial hidden state
         returns the loss, gradients on model parameters, and last hidden state
         """
         # forward pass
-        loss, xs, hs1, hs2, ps1, ps2, inputs = self.forward_pass(inputs, grp_targets, loc_targets, hprev1, hprev2)
+        loss, xs, hs1, hs2, ps1, ps2, inputs = self.forward_pass(inputs, grp_targets, loc_targets, hprev1, hprev2, avg_saliency_region)
         # backward pass: compute gradients going backwards
         dWxh, dWhh1, dWhh2, dWh1h2, dWhy1, dWhy2, dbh1, dbh2, dby1, dby2 = self.backward_pass(inputs, grp_targets, loc_targets, xs, hs1, hs2, ps1, ps2)
         for dparam in [dWxh, dWhh1, dWhh2, dWh1h2, dWhy1, dWhy2, dbh1, dbh2, dby1, dby2]:

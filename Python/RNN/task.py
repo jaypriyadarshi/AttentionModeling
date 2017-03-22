@@ -11,6 +11,7 @@ import vars
 
 class Task(object):
 	def _prep_Data(self):
+		print "Loading Data"
 		data = scipy.io.loadmat(vars.IP_MAT_FileName)
 		badTrials = scipy.io.loadmat(vars.BadTrial_FileName)
 		badTrials = map(lambda trial_num: trial_num[0][0], badTrials['badTrials']['trialNum'][0])
@@ -68,12 +69,11 @@ class Task(object):
 		#each frame contains another list with each element representing avg of a particular map
 
 		grp_targets = map(lambda trial: trial.group - 1, trials) #0 indexed
+		print "Data Loaded"
 		return {'group_targets': group, 'regions': region, 'avg_saliency_region': avg_saliency_vals, 'saliency_bin_num': saliency_bins} 
 
 	def _train_rnn(self):
-		print "Loading Data"
 		model = Model(vars.hidden_size, vars.num_classes, vars.num_regions, vars.seq_length)
-		print "Data Loaded"
 		data = self._prep_Data()
 		solver = Solver(model, data, vars.num_iter, vars.learning_rate, vars.update_rule)
 		solver._train()

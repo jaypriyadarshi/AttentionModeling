@@ -10,8 +10,8 @@ max_saliency_SaveFile = 'max_saliency_vals.p'
 Groups = [1,5]
 n_bins = 3
 num_regions = (Saliency_Map_Res['height'] / Saliency_Map_Receptive_Field['height']) * (Saliency_Map_Res['width'] / Saliency_Map_Receptive_Field['width'])
-#ip_dim = num_regions + (len(Map_Types) * n_bins) + (num_regions * len(Map_Types)) # num regions + 5 sal maps + avg region vals from 5 maps
-ip_dim = num_regions + (len(Map_Types) * n_bins)
+ip_dim = num_regions + (len(Map_Types) * n_bins) + (num_regions * len(Map_Types)) # num regions + 5 sal maps + avg region vals from 5 maps
+#ip_dim = num_regions + (len(Map_Types) * n_bins)
 num_classes = len(Groups)
 
 #hyperparameters

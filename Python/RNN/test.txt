@@ -1,0 +1,72 @@
+import scipy.io 
+import numpy as np
+import h5py
+import os
+import cPickle as pickle
+from data_utils import EyeTracker, Trial, Saliency_Map, get_dir_entries, get_trials
+from solver import Solver
+from model import Model
+from optimizer import Optimizer
+import vars
+data = scipy.io.loadmat(vars.IP_MAT_FileName)
+idx = get_trials(data, vars.Groups[0])
+eye_tracker = EyeTracker(data)
+trials = []
+_ = map(lambda grp: map(lambda trial_num: trials.append(Trial(data, trial_num)), get_trials(data, grp)), vars.Groups)
+frametimes = map(lambda trial: trial._compute_frametime(eye_tracker), trials)
+_ = map(lambda trial: trial._preprocess(eye_tracker), trials)
+saliency_obj = Saliency_Map(vars.Saliency_Map_BaseDir, vars.Saliency_Map_Res, vars.Saliency_Map_Receptive_Field, vars.Map_Types)
+saliency_maps = map(lambda movie: saliency_obj._load_saliency_maps(movie), get_dir_entries(vars.Saliency_Map_BaseDir))
+segmented_map = saliency_obj._segment_map().astype(int)
+
+badTrials = scipy.io.loadmat(vars.BadTrial_FileName)
+badTrials = map(lambda trial_num: trial_num[0][0], badTrials['badTrials']['trialNum'][0])
+
+
+
+saliency_bins = [] 
+avg_saliency_vals = [] 
+region = []
+group = []
+for trial_idx in range(2):
+	if trials[trial_idx].trial_num in badTrials:
+		continue
+	#trial_avg_saliency = []
+	#trial_saliency_bins = []
+	frame_seq = np.digitize(trials[trial_idx].timestamps, trials[trial_idx].frametimes) #will return an array like [1,1,1,2,2,2,...] each entry indicating the framenumber
+	for frame_idx in range(len(frame_seq)):
+		print frame_idx, trial_idx, trials[trial_idx].movie_num
+		frame_avg_saliency = []
+		frame_saliency_bins = []
+		for map_idx in range(len(vars.Map_Types)):
+			try:
+				saliency_value = saliency_maps[trials[trial_idx].movie_num][map_idx][frame_seq[frame_idx]].reshape(saliency_obj.height, saliency_obj.width)[trials[trial_idx].y[frame_idx], trials[trial_idx].x[frame_idx]][0]
+			except:
+				continue
+			frame_avg_saliency.append(saliency_obj._avg_saliency_region(saliency_maps[trials[trial_idx].movie_num][map_idx][frame_seq[frame_idx]].reshape(saliency_obj.height, saliency_obj.width)))
+			hist, bin_edges = np.histogram(saliency_maps[trials[trial_idx].movie_num][map_idx][frame_seq[frame_idx]], bins=vars.n_bins)
+			#print bin_edges, saliency_value
+			try:
+				frame_saliency_bins.append(np.where(bin_edges >  saliency_value)[0][0])
+			except:
+				frame_saliency_bins.append(vars.n_bins - 1)
+			
+		if len(frame_saliency_bins) == len(vars.Map_Types):
+			saliency_bins.append(frame_saliency_bins)
+			avg_saliency_vals.append(np.array(frame_avg_saliency).ravel())
+			region.append(segmented_map[trials[trial_idx].y[frame_idx]][trials[trial_idx].x[frame_idx]])
+			group.append(trials[trial_idx].group - 1)
+
+t1 = []
+_ = map(lambda x: t1.append(Trial(data, x)._preprocess(eye_tracker)), idx)
+
+
+def _load_saliency_maps(base_dir, movie_name, map_types):
+    def _load_map(base_dir, movie_name, map_type):
+            file_path = base_dir + '/' + movie_name.split('.')[0] + '/feat' + map_type + '.mat'
+            f = h5py.File(file_path)
+            return np.array((f.get('feats'))).T
+    return map(lambda x: _load_map(base_dir, movie_name, x), map_types)
+
+t = Trial(data, 0)
+maps = _load_saliency_maps(vars.Saliency_Map_BaseDir, t.movie_name[0], vars.Map_Types)

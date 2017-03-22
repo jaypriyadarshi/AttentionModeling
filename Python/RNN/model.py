@@ -26,15 +26,15 @@ class Model(object):
         hs1[-1] = np.copy(hprev1)
         hs2[-1] = np.copy(hprev2) 
         loss = 0
-        print "inputs", inputs[0]
+        #print "inputs", inputs[0]
 
         inputs = map(lambda (l,s): 
             [l, s[0] + self.num_regions, s[1] + self.num_regions + vars.n_bins, s[2] + self.num_regions + (2 * vars.n_bins), s[3] + self.num_regions + (3 * vars.n_bins), s[4] + self.num_regions + (4 * vars.n_bins)], inputs)
         for t in xrange(len(inputs)):
             xs[t] = np.zeros((self.num_regions + (len(vars.Map_Types) * vars.n_bins),1)) # encode in 1-of-k representation
             xs[t][inputs[t]] = 1
-            print "Wxh size: ", self.Wxh.shape
-            print "input size: ", xs[t].shape
+            #print "Wxh size: ", self.Wxh.shape
+            #print "input size: ", xs[t].shape
             hs1[t] = np.tanh(np.dot(self.Wxh, xs[t]) + np.dot(self.Whh1, hs1[t-1]) + self.bh1) # hidden state 1
             ys1[t] = np.dot(self.Why1, hs1[t]) + self.by1 # unnormalized log probabilities for participant group
             ps1[t] = np.exp(ys1[t]) / np.sum(np.exp(ys1[t])) # probabilities for participant group
@@ -87,7 +87,7 @@ class Model(object):
         dWxh, dWhh1, dWhh2, dWh1h2, dWhy1, dWhy2, dbh1, dbh2, dby1, dby2 = self.backward_pass(inputs, grp_targets, loc_targets, xs, hs1, hs2, ps1, ps2)
         for dparam in [dWxh, dWhh1, dWhh2, dWh1h2, dWhy1, dWhy2, dbh1, dbh2, dby1, dby2]:
             np.clip(dparam, -5, 5, out=dparam) # clip to mitigate exploding gradients
-        return loss, dWxh, dWhh1, dWhh2, dWh1h2, dWhy1, dWhy2, dbh1, dbh2, dby1, dby2, hs1[len(grp_inputs)-1], hs2[len(loc_inputs)-1]
+        return loss, dWxh, dWhh1, dWhh2, dWh1h2, dWhy1, dWhy2, dbh1, dbh2, dby1, dby2, hs1[len(grp_targets)-1], hs2[len(loc_targets)-1]
 
     def _sample(self, h, seed_ix, n):
         """ 

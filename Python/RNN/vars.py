@@ -18,7 +18,7 @@ num_classes = len(Groups)
 hidden_size = 100 # size of hidden layer of neurons
 seq_length = 15 # number of steps to unroll the RNN for
 learning_rate = 1e-1
-num_iter = 1000
+num_iter = 10000
 update_rule = 'adagrad'
 
 #model params

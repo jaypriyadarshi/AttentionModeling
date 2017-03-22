@@ -31,7 +31,7 @@ class Task(object):
 		avg_saliency_vals = [] # avg_saliency over different regions for all trials
 		region = []
 		group = []
-		for trial_idx in range(2):
+		for trial_idx in range(len(trials)):
 			if trials[trial_idx].trial_num in badTrials:
 				continue
 			#trial_avg_saliency = []
@@ -56,14 +56,6 @@ class Task(object):
 				if len(frame_saliency_bins) == len(vars.Map_Types):
 					saliency_bins.append(frame_saliency_bins)
 					avg_saliency_vals.append(np.array(frame_avg_saliency).ravel())
-					"""
-					print "trial_idx: ", trial_idx
-					print "frame_idx: ", frame_idx
-					print "len(trials): ", len(trials)
-					print "trials[trial_idx].y[frame_idx]: ", trials[trial_idx].y[frame_idx][0]
-					print "[trials[trial_idx].x[frame_idx]]: ", trials[trial_idx].x[frame_idx][0]
-					print "segmented_map.shape: ", segmented_map.shape
-					"""
 					region.append(segmented_map[trials[trial_idx].y[frame_idx][0]][trials[trial_idx].x[frame_idx][0]])
 					group.append(trials[trial_idx].group - 1)
 			#avg_saliency_vals.append(trial_avg_saliency)
@@ -79,7 +71,9 @@ class Task(object):
 		return {'group_targets': group, 'regions': region, 'avg_saliency_region': avg_saliency_vals, 'saliency_bin_num': saliency_bins} 
 
 	def _train_rnn(self):
+		print "Loading Data"
 		model = Model(vars.hidden_size, vars.num_classes, vars.num_regions, vars.seq_length)
+		print "Data Loaded"
 		data = self._prep_Data()
 		solver = Solver(model, data, vars.num_iter, vars.learning_rate, vars.update_rule)
 		solver._train()

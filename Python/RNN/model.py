@@ -26,12 +26,15 @@ class Model(object):
         hs1[-1] = np.copy(hprev1)
         hs2[-1] = np.copy(hprev2) 
         loss = 0
-        inputs = map(lambda (l,s1,s2,s3,s4,s5): 
-            [l, s1 + self.num_regions, s2 + self.num_regions + vars.n_bins, s2 + self.num_regions + (2 * vars.n_bins), s3 + self.num_regions + (3 * vars.n_bins), s4 + self.num_regions + (4 * vars.n_bins), 
-            s5 + self.num_regions + (5 * vars.n_bins)], inputs)
+        print "inputs", inputs[0]
+
+        inputs = map(lambda (l,s): 
+            [l, s[0] + self.num_regions, s[1] + self.num_regions + vars.n_bins, s[2] + self.num_regions + (2 * vars.n_bins), s[3] + self.num_regions + (3 * vars.n_bins), s[4] + self.num_regions + (4 * vars.n_bins)], inputs)
         for t in xrange(len(inputs)):
             xs[t] = np.zeros((self.num_regions + (len(vars.Map_Types) * vars.n_bins),1)) # encode in 1-of-k representation
             xs[t][inputs[t]] = 1
+            print "Wxh size: ", self.Wxh.shape
+            print "input size: ", xs[t].shape
             hs1[t] = np.tanh(np.dot(self.Wxh, xs[t]) + np.dot(self.Whh1, hs1[t-1]) + self.bh1) # hidden state 1
             ys1[t] = np.dot(self.Why1, hs1[t]) + self.by1 # unnormalized log probabilities for participant group
             ps1[t] = np.exp(ys1[t]) / np.sum(np.exp(ys1[t])) # probabilities for participant group
@@ -57,7 +60,7 @@ class Model(object):
             dbh2 += dhraw2
             dWh1h2 += np.dot(dhraw2, hs1[t].T)
             dWhh2 += np.dot(dhraw2, hs2[t-1].T)
-            dh1 = np.dot(dhraw2, self.Wh1h2.T) #review
+            dh1 = np.dot(self.Wh1h2.T, dhraw2) #review
             dh2next = np.dot(self.Whh2.T, dhraw2)
             #backprop through layer-1 
             dy1 = np.copy(ps1[t])
@@ -69,7 +72,7 @@ class Model(object):
             dbh1 += dhraw1
             dWxh += np.dot(dhraw1, xs[t].T)
             dWhh1 = np.dot(dhraw1, hs1[t-1].T)
-            dh1next = np.dot(Whh1.T, dhraw1) 
+            dh1next = np.dot(self.Whh1.T, dhraw1) 
         return dWxh, dWhh1, dWhh2, dWh1h2, dWhy1, dWhy2, dbh1, dbh2, dby1, dby2
 
     def _loss(self, inputs, grp_targets, loc_targets, hprev1, hprev2):

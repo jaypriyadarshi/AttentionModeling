@@ -24,6 +24,7 @@ class Solver(object):
 			self._reset()
 
 		inputs = map(lambda (region_id, saliency_bin_nums): [region_id] + [saliency_bin_nums], zip(self.data['regions'][self.start_id : self.start_id + self.model.seq_length], self.data['saliency_bin_num'][self.start_id : self.start_id + self.model.seq_length]))
+		print "inputs", inputs[0]
 		grp_targets = self.data['group_targets'][self.start_id : self.start_id + self.model.seq_length]
 		loc_targets = self.data['regions'][self.start_id + 1 : self.start_id + self.model.seq_length + 1]
 

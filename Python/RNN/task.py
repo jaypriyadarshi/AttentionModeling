@@ -29,11 +29,13 @@ class Task(object):
 		xy_regions = map(lambda trial: segmented_map[[trial.y.ravel(), trial.x.ravel()]], trials)
 		saliency_bins = [] # stores which bin the saliency val corresponding to (x,y) belongs to
 		avg_saliency_vals = [] # avg_saliency over different regions for all trials
+		region = []
+		group = []
 		for trial_idx in range(2):
 			if trials[trial_idx].trial_num in badTrials:
 				continue
-			trial_avg_saliency = []
-			trial_saliency_bins = []
+			#trial_avg_saliency = []
+			#trial_saliency_bins = []
 			frame_seq = np.digitize(trials[trial_idx].timestamps, trials[trial_idx].frametimes) #will return an array like [1,1,1,2,2,2,...] each entry indicating the framenumber
 			for frame_idx in range(len(frame_seq)):
 				frame_avg_saliency = []
@@ -50,20 +52,31 @@ class Task(object):
 						frame_saliency_bins.append(np.where(bin_edges >  saliency_value)[0][0])
 					except:
 						frame_saliency_bins.append(vars.n_bins - 1)
-				trial_avg_saliency.append(np.array(frame_avg_saliency).ravel())
-				trial_saliency_bins.append(frame_saliency_bins)
-			avg_saliency_vals.append(trial_avg_saliency)
-			saliency_bins.append(trial_saliency_bins)
-			print avg_saliency_vals
-			print saliency_bins
 			
+				if len(frame_saliency_bins) == len(vars.Map_Types):
+					saliency_bins.append(frame_saliency_bins)
+					avg_saliency_vals.append(np.array(frame_avg_saliency).ravel())
+					"""
+					print "trial_idx: ", trial_idx
+					print "frame_idx: ", frame_idx
+					print "len(trials): ", len(trials)
+					print "trials[trial_idx].y[frame_idx]: ", trials[trial_idx].y[frame_idx][0]
+					print "[trials[trial_idx].x[frame_idx]]: ", trials[trial_idx].x[frame_idx][0]
+					print "segmented_map.shape: ", segmented_map.shape
+					"""
+					region.append(segmented_map[trials[trial_idx].y[frame_idx][0]][trials[trial_idx].x[frame_idx][0]])
+					group.append(trials[trial_idx].group - 1)
+			#avg_saliency_vals.append(trial_avg_saliency)
+			#saliency_bins.append(trial_saliency_bins)
+			#print saliency_bins
+
 
 		#saliency bins: [[each trial[each frame]]] - each element represents a trial and each trial has a list for each frame, each frame contains the bin number for each saliency map (list)
 		#avg_saliency_vals: [[each trial[each frame]]] - each element represents a trial and each trial has a list for each frame's average saliency value over regions,
 		#each frame contains another list with each element representing avg of a particular map
 
 		grp_targets = map(lambda trial: trial.group - 1, trials) #0 indexed
-		return {'group_targets': grp_targets, 'regions': xy_regions, 'avg_saliency_region': avg_saliency_vals, 'saliency_bin_num': saliency_bins} 
+		return {'group_targets': group, 'regions': region, 'avg_saliency_region': avg_saliency_vals, 'saliency_bin_num': saliency_bins} 
 
 	def _train_rnn(self):
 		model = Model(vars.hidden_size, vars.num_classes, vars.num_regions, vars.seq_length)

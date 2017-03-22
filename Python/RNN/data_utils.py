@@ -30,7 +30,7 @@ class Trial(object):
 		#only consider (x,y) in the actual trial and not calibration
 		self.x = self.x[self.dframe_tIND[0] :]
 		self.y = self.y[self.dframe_tIND[0] :]
-
+		self.timestamps = self.timestamps[self.timestamps >= 0]
 		#DVA to pixels
 		self.x = (self.x * eye_tracker.PPD) / 1000
 		self.y = (self.y * eye_tracker.PPD) / 1000
@@ -44,8 +44,8 @@ class Trial(object):
 		self.x[self.x < 0] = 0
 		self.y[self.y >= vars.Saliency_Map_Res['height']] = vars.Saliency_Map_Res['height'] - 1
 		self.y[self.y < 0] = 0
-		self.x = self.x.astype(int) - 1 #MATLAB is 1-indexed
-		self.y = self.y.astype(int) - 1
+		self.x = self.x.astype(int)
+		self.y = self.y.astype(int)
 
 
 	#for index = frame_num we get the timestamp in ms

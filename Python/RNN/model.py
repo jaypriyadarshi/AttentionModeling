@@ -93,20 +93,17 @@ class Model(object):
             np.clip(dparam, -5, 5, out=dparam) # clip to mitigate exploding gradients
         return loss, dWxh, dWhh1, dWhh2, dWh1h2, dWhy1, dWhy2, dbh1, dbh2, dby1, dby2, hs1[len(grp_targets)-1], hs2[len(loc_targets)-1]
 
-    def _sample(self, h, seed_ix, n):
-        """ 
-        sample a sequence of integers from the model 
-        h is memory state, seed_ix is seed letter for first time step
-        """
-        x = np.zeros((vocab_size, 1))
-        x[seed_ix] = 1
-        ixes = []
-        for t in xrange(n):
-            h = np.tanh(np.dot(self.Wxh, x) + np.dot(self.Whh, h) + self.bh)
-            y = np.dot(self.Why, h) + self.by
-            p = np.exp(y) / np.sum(np.exp(y))
-            ix = np.random.choice(range(vocab_size), p=p.ravel())
-            x = np.zeros((vocab_size, 1))
-            x[ix] = 1
-            ixes.append(ix)
-        return ixes
+    def _predict(self, inputs, hs1, hs2, avg_saliency_region):
+        inputs = map(lambda (l,s): 
+            [l, s[0] + self.num_regions, s[1] + self.num_regions + vars.n_bins, s[2] + self.num_regions + (2 * vars.n_bins), s[3] + self.num_regions + (3 * vars.n_bins), s[4] + self.num_regions + (4 * vars.n_bins)], inputs)
+        for t in xrange(len(inputs)):
+            x = np.zeros((self.num_regions + (len(vars.Map_Types) * vars.n_bins),1)) # encode in 1-of-k representation
+            x[inputs[t]] = 1
+            x = np.vstack((x, avg_saliency_region[t].reshape(avg_saliency_region[t].shape[0], 1)))
+            hs1 = np.tanh(np.dot(self.Wxh, x) + np.dot(self.Whh1, hs1) + self.bh1) # hidden state 1
+            ys1 = np.dot(self.Why1, hs1) + self.by1 # unnormalized log probabilities for participant group
+            ps1 = np.exp(ys1) / np.sum(np.exp(ys1)) # probabilities for participant group
+            hs2 = np.tanh(np.dot(self.Wh1h2, hs1) + np.dot(self.Whh2, hs2) + self.bh2) # hidden state 2
+            ys2 = np.dot(self.Why2, hs2) + self.by2 # unnormalized log probabilities for next location
+            ps2 = np.exp(ys2) / np.sum(np.exp(ys2)) # probabilities for next location
+        return np.argsort(ps1.ravel())[-1]

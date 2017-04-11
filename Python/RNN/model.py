@@ -29,7 +29,7 @@ class Model(object):
         inputs = map(lambda (l,s): 
             [l, s[0] + self.num_regions, s[1] + self.num_regions + vars.n_bins, s[2] + self.num_regions + (2 * vars.n_bins), s[3] + self.num_regions + (3 * vars.n_bins), s[4] + self.num_regions + (4 * vars.n_bins)], inputs)
         for t in xrange(len(inputs)):
-            xs[t] = np.zeros((self.num_regions + (len(vars.Map_Types) * vars.n_bins),1)) # encode in 1-of-k representation
+            xs[t] = np.zeros((self.num_regions + (len(vars.Map_Types) * vars.n_bins),1)) # create a sparse vector
             #print inputs[t]
             xs[t][inputs[t]] = 1
             #print "Wxh size: ", self.Wxh.shape

@@ -59,9 +59,9 @@ def _run_kmeans(known_features, unknown_features, known_labels, means):
 		if np.array_equal(updated_means, means):
 			return predicted_labels
 		means = updated_means
-		itr += 1 
+		itr += 1
 
-if __name__ == '__main__':
+def _run_task():
 	accuracies = []
 	for _ in range(vars.kmeans_runs):
 		known_features, known_labels, unknown_features, unknown_labels, means = _read_data()
@@ -71,6 +71,13 @@ if __name__ == '__main__':
 		accuracies.append(accuracy)
 	accuracies = np.array(accuracies)
 	print 'Mean Accuracy: {0}, std: {1}, Max: {2}, Min: {3}'.format(np.mean(accuracies), np.std(accuracies), np.max(accuracies), np.min(accuracies))
+
+def main():
+	_run_task()
+
+if __name__ == '__main__':
+	main()
+	
 
 
 
